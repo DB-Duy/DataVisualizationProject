@@ -12,7 +12,7 @@ let country = {
 };
 let geojson = {};
  
-d3.json("ne_110m_admin_0_countries.json").then(function(json) {
+d3.json("map.geojson").then(function(json) {
 	geojson = json;
 	initialize();
 	update();
@@ -35,7 +35,7 @@ function update() {
 		if (country.clickedLocation == null) {
 			context.strokeStyle = '#888';
 		} else {
-			context.strokeStyle = country.clickedLocation && d3.geoContains(d, country.clickedLocation) ? '#888' : 'red';
+			context.strokeStyle = country.clickedLocation && d3.geoContains(d, country.clickedLocation) ? 'red' : '#888';
 		}
 		geoGenerator(d);
 		context.stroke();
