@@ -1,30 +1,27 @@
 // Get the selected country from the query parameter
 const urlParams = new URLSearchParams(window.location.search);
-const country = urlParams.get("country");
+const country = urlParams.get("country").trim().toLowerCase();
 
 // Generate dynamic content based on the selected country
-let content;
-if (country === "Vietnam") {
-  content =
-    "<p>Vietnam is a country located in Southeast Asia. It has a rich history and culture, and is known for its delicious food and beautiful landscapes.</p>";
-} else if (country === "China") {
-  content =
-    "<p>China is a country located in East Asia. It is the world's most populous country, and has a rich cultural heritage dating back thousands of years.</p>";
-} else {
-  content = "<p>Invalid country selected.</p>";
-}
-
-// Insert the dynamic content into the page
-const contentElement = document.getElementById("content");
-contentElement.innerHTML = content;
+d3.csv("http://127.0.0.1:8080/Tools/CountrySummary.csv").then((data) => {
+  const countryData = data.filter(
+    (d) => d["CountryCode"].trim().toLowerCase() == country
+  );
+  const contentElement = document.getElementById("content");
+  contentElement.innerHTML = countryData[0]["Summary"];
+});
 
 d3.csv("http://127.0.0.1:8080/Inflation_Annual_Filtered.csv").then((data) => {
   DrawGraph(data);
 });
 
 const DrawGraph = (data) => {
-  const countryData = data.filter((d) => d["Country"] == country)[0];
-  console.log(countryData);
+  const countryData = data.filter(
+    (d) => d["Country Code"].trim().toLowerCase() == country
+  )[0];
+  d3.select("#countryName").text(countryData["Country"]);
+  d3.select("title").text(countryData["Country"]);
+  // console.log(countryData);
 
   const getYearRange = () => {
     let range = [];
@@ -44,14 +41,14 @@ const DrawGraph = (data) => {
       inflationRates.push([d, countryData[d]]);
     }
   });
-  console.log(inflationRates);
+  // console.log(inflationRates);
 
   const margin = { top: 20, right: 20, bottom: 30, left: 50 };
   const width = 600 - margin.left - margin.right;
   const height = 400 - margin.top - margin.bottom;
 
   const svg = d3
-    .select("#content")
+    .select("#canvas")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)

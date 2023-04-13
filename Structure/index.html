@@ -3,14 +3,26 @@
 
 <head>
     <title>Index Page</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
 <body>
     <h1>Select a Country</h1>
-    <ul>
-        <li><a href="template.html?country=Vietnam">Vietnam</a></li>
-        <li><a href="template.html?country=China">China</a></li>
+    <ul id="countryList">
     </ul>
 </body>
+<script>
+    d3.csv("http://127.0.0.1:8080/Inflation_Annual_Filtered.csv").then((data) => {
+        d3.select("#countryList")
+            .selectAll("li")
+            .data(data)
+            .join("li")
+            .append("a")
+            .attr("href", (d) => {
+                return "template.html?country=" + d["Country Code"];
+            })
+            .text((d) => d["Country"])
+    });
+</script>
 
 </html>
