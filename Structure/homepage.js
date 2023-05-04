@@ -19,7 +19,7 @@ d3.json("http://127.0.0.1:8080/Country/map.geojson").then(function (json) {
 });
 
 function update() {
-  context.clearRect(20, 20, 1000, 400);
+  context.clearRect(20, 20, 1000, 500);
   projection.fitExtent(
     [
       [20, 20],
