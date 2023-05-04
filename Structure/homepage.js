@@ -11,11 +11,16 @@ let country = {
   data: null
 };
 let geojson = {};
+let data = null;
+let scaleC = null;
 
 d3.json("http://127.0.0.1:8080/Country/map.geojson").then(function (json) {
   geojson = json;
-  initialize();
-  update();
+  d3.csv("http://127.0.0.1:8080/Inflation_Annual_Filtered.csv").then(function(d) {
+	data = d;
+	initialize();
+  	update();
+	});
 });
 
 function update() {
@@ -35,9 +40,26 @@ function update() {
 	context.stroke();
 	*/
   geojson.features.forEach(function (d) {
+	let number = null;
     context.lineWidth = 0.5;
     context.strokeStyle = "#888";
     context.beginPath();
+    
+    data.forEach(function(e) {
+		
+		//console.log(e["Country Code"].trim().toLowerCase());
+		//console.log(scaleC(e["2022"]));
+		//console.log(d.properties["sov_a3"]);
+		if (d.properties["sov_a3"] == e["Country Code"]) {
+			console.log("a");
+			if (e["2022"] != null) {
+				//context.fillStyle(scaleC(e["2022"])); 
+				number = e["2020"];
+				//console.log(number);
+			}	
+		}
+	})
+    
     if (country.clickedLocation == null) {
       context.strokeStyle = "#888";
     } else {
@@ -50,9 +72,15 @@ function update() {
 			country.data = d;
 		}
     }
+    if (number != null) {
+		context.fillStyle = scaleC(number);
+	}
+    else {
+		context.fillStyle = "white";
+	}
     geoGenerator(d);
     context.stroke();
-    //context.fill()
+    context.fill()
   });
   
   if (country.data != null)
@@ -76,4 +104,6 @@ function initialize() {
   })
   d3.select("svg.detail").append("g").attr("class", "name").attr("transform", "translate(20,20)");
   d3.select("g.name").append("text").attr("class", "name");
+  scaleC = d3.scaleQuantize().domain([-20, 20])
+	.range(["#ca0020","#f4a582","#f7f7f7","#92c5de","#0571b0"]);
 }
