@@ -1,8 +1,6 @@
-// Get the selected country from the query parameter
 const urlParams = new URLSearchParams(window.location.search);
 const country = urlParams.get("country").trim().toLowerCase();
 
-// Generate dynamic content based on the selected country
 d3.csv("http://127.0.0.1:8080/Tools/CountrySummary.csv").then((data) => {
   const countryData = data.filter(
     (d) => d["CountryCode"].trim().toLowerCase() == country
@@ -21,7 +19,6 @@ const DrawGraph = (data) => {
   )[0];
   d3.select("#countryName").text(countryData["Country"]);
   d3.select("title").text(countryData["Country"]);
-  // console.log(countryData);
 
   const getYearRange = () => {
     let range = [];
@@ -41,7 +38,6 @@ const DrawGraph = (data) => {
       inflationRates.push([d, countryData[d]]);
     }
   });
-  // console.log(inflationRates);
 
   const margin = { top: 20, right: 20, bottom: 50, left: 50 };
   const width = 600 - margin.left - margin.right;
@@ -73,10 +69,13 @@ const DrawGraph = (data) => {
 
   svg
     .append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(xAxis);
+    .attr("id", "x-axis")
+    .attr("transform", "translate(0," + height + ")");
 
-  svg.append("g").call(yAxis);
+  svg.append("g").attr("id", "y-axis");
+  svg.select("#x-axis").transition().duration(500).call(xAxis);
+
+  svg.select("#y-axis").transition().duration(500).call(yAxis);
   svg
     .append("text")
     .attr(
@@ -107,14 +106,34 @@ const DrawGraph = (data) => {
     .style("border-radius", "4px")
     .style("opacity", 0);
 
+  const line = d3
+    .line()
+    .x((d) => x(d[0]))
+    .y((d) => y(d[1]))
+    .curve(d3.curveMonotoneX);
+  svg
+    .append("path")
+    .datum(inflationRates)
+    .attr("fill", "none")
+    .attr("stroke", "steelblue")
+    .attr("stroke-width", 1.5)
+    .attr("d", line)
+    .attr("stroke-dasharray", function () {
+      return this.getTotalLength();
+    })
+    .attr("stroke-dashoffset", function () {
+      return this.getTotalLength();
+    })
+    .transition()
+    .duration(500)
+    .attr("stroke-dashoffset", 0);
   svg
     .selectAll(".dot")
     .data(inflationRates)
-    .enter()
-    .append("circle")
+    .join("circle")
     .attr("class", "dot")
     .attr("cx", (d) => x(d[0]))
-    .attr("cy", (d) => y(d[1]))
+    .attr("cy", height)
     .attr("r", 4)
     .attr("fill", "steelblue")
     .on("mouseover", (event, d) => {
@@ -124,21 +143,22 @@ const DrawGraph = (data) => {
         .html(`Year: ${d[0]}<br>Inflation Rate: ${d[1]}`)
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 10 + "px");
+      d3.select(event.currentTarget)
+        .transition()
+        .duration(100)
+        .attr("r", 6)
+        .attr("fill", "orange");
     })
-    .on("mouseout", () => {
-      // Hide the tooltip
+    .on("mouseout", (event) => {
       tooltip.style("opacity", 0);
-    });
-
-  const line = d3
-    .line()
-    .x((d) => x(d[0]))
-    .y((d) => y(d[1]));
-  svg
-    .append("path")
-    .datum(inflationRates)
-    .attr("fill", "none")
-    .attr("stroke", "steelblue")
-    .attr("stroke-width", 1.5)
-    .attr("d", line);
+      d3.select(event.currentTarget)
+        .transition()
+        .duration(100)
+        .attr("r", 4)
+        .attr("fill", "steelblue");
+    })
+    .transition()
+    .duration(500)
+    .delay((d, i) => i * 40)
+    .attr("cy", (d) => y(d[1]));
 };
