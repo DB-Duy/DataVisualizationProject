@@ -161,31 +161,35 @@ const DrawGraph = (data) => {
     .duration(500)
     .delay((d, i) => i * 40)
     .attr("cy", (d) => y(d[1]));
-  const legend = svg
-    .append("g")
-    .attr("class", "legend")
-    .attr(
-      "transform",
-      "translate(" + (width - 100) + "," + (height - 20) + ")"
-    );
 
-  legend
-    .append("rect")
-    .attr("x", 0)
-    .attr("y", 0)
-    .attr("width", 10)
-    .attr("height", 10)
-    .attr("fill", "steelblue");
+  // const legend = svg
+  //   .append("g")
+  //   .attr("class", "legend")
+  //   .attr(
+  //     "transform",
+  //     "translate(" + (width + 100) + "," + height + margin.right + ")"
+  //   );
 
-  legend.append("text").attr("x", 20).attr("y", 10).text("Inflation Rate");
+  // legend
+  //   .append("rect")
+  //   .attr("x", 0)
+  //   .attr("y", 0)
+  //   .attr("width", 10)
+  //   .attr("height", 10)
+  //   .attr("fill", "steelblue");
+
+  // legend.append("text").attr("x", 20).attr("y", 10).text("Inflation Rate");
+
   svg
     .append("g")
     .attr("class", "grid")
+    .style("opacity", "0.1")
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(x).tickSize(-height).tickFormat(""));
 
   svg
     .append("g")
     .attr("class", "grid")
+    .style("opacity", "0.1")
     .call(d3.axisLeft(y).tickSize(-width).tickFormat(""));
 };
