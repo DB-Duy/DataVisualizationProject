@@ -14,7 +14,17 @@ function formatNumber(number) {
   }
   return shortNumber + suffixes[suffixNum];
 }
-
+const tooltip = d3
+  .select("body")
+  .append("div")
+  .style("position", "absolute")
+  .style("pointer-events", "none")
+  .style("background-color", "rgba(0, 0, 0, 0.8)")
+  .style("color", "#fff")
+  .style("padding", "8px")
+  .style("font-size", "12px")
+  .style("border-radius", "4px")
+  .style("opacity", 0);
 d3.csv("http://127.0.0.1:8080/Tools/CountrySummary.csv").then((data) => {
   const countryData = data.filter(
     (d) => d["CountryCode"].trim().toLowerCase() == country
@@ -28,25 +38,42 @@ d3.csv("http://127.0.0.1:8080/Inflation_Annual_Filtered.csv").then((data) => {
 });
 
 const PopulateFields = (d) => {
-  // custom fields : country-name, region-name, country-map
+  // custom fields : country-name, region-name, country-map, latest-rate, population, currency, currency-value
   d3.select("#country-name").html(d["Country"]);
   d3.csv(
     "http://127.0.0.1:8080/Tools/CWON2021%20Country%20Tool%20-%20Full%20Dataset%20-%20Filtered.csv"
   ).then((data) => {
-    const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+    const margin = { top: 20, right: 20, bottom: 70, left: 50 };
     const width = 550 - margin.left - margin.right;
     const height = 450 - margin.top - margin.bottom;
     const countryData = data.filter(
       (d) => d["wb_code"].trim().toLowerCase() == country
     );
+    // d3.csv("http://127.0.0.1:8080/Tools/WS_XRU_D_csv_col.csv").then(
+    //   (currencyData) => {
+    //     const filteredData = currencyData.filter(
+    //       (e) =>
+    //         e["Reference area"].trim().toLowerCase() ===
+    //         d["Country"].trim().toLowerCase()
+    //     );
+    //     console.log(filteredData);
+    //     d3.select("#currency").html(filteredData["Currency"]);
+    //     d3.select("#currency-value").html(filteredData["2022 - 12 - 31"] + "$");
+    //   }
+    // );
     const latestData = countryData[countryData.length - 1];
     d3.select("#region-name").html(latestData["wb_region"]);
+    d3.select("#population").html(latestData["pop"]);
     d3.select("#total-wealth").html(
       latestData["totwealth"] == ".."
         ? "#NA"
         : "$" + formatNumber(Number(latestData["totwealth"]))
     );
-    d3.select("#total-wealth-info").html(latestData["wb_income"]);
+    d3.select("#total-wealth-info").html(
+      latestData["wb_income"].includes("OECD")
+        ? "Not in the OECD"
+        : latestData["wb_income"]
+    );
     console.log(latestData);
     const svg = d3
       .select("#stackedBar")
@@ -107,12 +134,6 @@ const PopulateFields = (d) => {
     //   .transition()
     //   .attr("height", (d) => Math.abs(yScale(d.value) - yScale(0)))
     //   .attr("fill", (d, i) => colorScale(i));
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .attr("class", "tooltip")
-      .style("opacity", 0);
-
     const bars = svg
       .selectAll("rect")
       .data(entry)
@@ -149,9 +170,10 @@ const PopulateFields = (d) => {
       .data(entry)
       .join("text")
       .attr("x", (d) => xScale(d.category) + xScale.bandwidth() / 2)
-      .attr("y", (d) => (d.value >= 0 ? yScale(d.value) - 5 : yScale(0) + 30))
+      .attr("y", (d) => (d.value >= 0 ? yScale(d.value) - 5 : yScale(0) + 60))
       .attr("text-anchor", "middle")
-      .text((d) => formatNumber(d.value));
+      .text((d) => (isNaN(d.value) ? "No Data" : formatNumber(d.value)));
+
     const legendData = [
       { label: "Produced Capital", color: colorScale("Produced Capital") },
       { label: "Human Capital", color: colorScale("Human Capital") },
@@ -187,9 +209,194 @@ const PopulateFields = (d) => {
       .attr("y", (d, i) => i * 30 + 15)
       .attr("font-size", 14)
       .attr("alignment-baseline", "middle");
+
+    DrawGraphPerCapita(data);
   });
 };
 
+const DrawGraphPerCapita = (data) => {
+  const countryData = data.filter(
+    (d) => d["wb_code"].trim().toLowerCase() == country
+  );
+  const margin = { top: 20, right: 200, bottom: 50, left: 100 };
+  const width = 800 - margin.left - margin.right;
+  const height = 400 - margin.top - margin.bottom;
+  const svg = d3
+    .select("#per-capita")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  const xScale = d3.scaleBand().range([0, width]).padding(0.1);
+
+  const yScale = d3.scaleLinear().range([height, 0]);
+
+  const colorScale = d3
+    .scaleOrdinal()
+    .range(["#FFB900", "#FF7733", "#E34F6F", "#8A6FAC", "#a05d56"]);
+  const xAxis = d3.axisBottom(xScale);
+  const yAxis = d3.axisLeft(yScale).ticks(5);
+  svg
+    .append("g")
+    .attr("class", "x-axis")
+    .attr("transform", `translate(0, ${height})`);
+
+  svg.append("g").attr("class", "y-axis");
+  const select = d3.select("#year-select");
+  for (let i = 1; i <= countryData.length; i++) {
+    select.append("option").attr("value", i).text(i);
+  }
+  svg
+    .append("div")
+    .attr("class", "tooltip")
+    .style("position", "absolute")
+    .style("pointer-events", "none")
+    .style("background-color", "rgba(0, 0, 0, 0.8)")
+    .style("color", "#fff")
+    .style("padding", "8px")
+    .style("font-size", "12px")
+    .style("border-radius", "4px")
+    .style("opacity", 0);
+  const keys = [
+    "producedCapital",
+    "renewableNaturalCapital",
+    "nonRenewableNaturalCapital",
+    "humanCapital",
+    "netForeignAssets",
+  ];
+  const legend = svg
+    .append("g")
+    .attr("class", "legend")
+    .attr("transform", `translate(${width}, 20)`);
+
+  // Add legend items
+  const legendItems = legend
+    .selectAll(".legend-item")
+    .data(keys)
+    .enter()
+    .append("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+
+  // Add colored rectangles for each legend item
+  legendItems
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", 12)
+    .attr("height", 12)
+    .attr("fill", (d, i) => colorScale(i));
+
+  // Add labels for each legend item
+  legendItems
+    .append("text")
+    .attr("x", 20)
+    .attr("y", 10)
+    .text((d) => d)
+    .style("font-size", "12px");
+
+  select.on("change", updateChart);
+
+  function updateChart() {
+    const numYearsToShow = +select.property("value");
+    const filteredData = countryData.slice(-numYearsToShow).map((d) => ({
+      year: isNaN(+d["year"]) ? 0 : +d["year"],
+      producedCapital: isNaN(+d["pk"]) ? 0 : +d["pk"],
+      renewableNaturalCapital: isNaN(+d["renew"]) ? 0 : +d["renew"],
+      nonRenewableNaturalCapital: isNaN(+d["nk"] - +d["renew"])
+        ? 0
+        : +d["nk"] - +d["renew"],
+      humanCapital: isNaN(+d["hc"]) ? 0 : +d["hc"],
+      netForeignAssets: isNaN(+d["nfa"]) ? 0 : +d["nfa"],
+    }));
+    console.log(filteredData);
+
+    xScale.domain(filteredData.map((d) => d.year));
+    yScale.domain([
+      0,
+      d3.max(
+        filteredData,
+        (d) =>
+          d.producedCapital +
+          d.renewableNaturalCapital +
+          d.nonRenewableNaturalCapital +
+          d.humanCapital
+      ),
+    ]);
+    svg.selectAll(".bar").remove();
+
+    svg.select(".x-axis").transition().duration(500).call(xAxis);
+
+    svg.select(".y-axis").transition().duration(500).call(yAxis);
+
+    const stack = d3.stack().keys(keys);
+
+    const stackedData = stack(filteredData);
+
+    const bars = svg.selectAll(".bar").data(stackedData);
+
+    bars
+      .enter()
+      .append("g")
+      .attr("class", "bar")
+      .attr("fill", (d) => colorScale(d.key))
+      .merge(bars)
+      .selectAll("rect")
+      .data((d) => d)
+      .enter()
+      .append("rect")
+      .on("mouseover", (event, d) => {
+        const selectedData = d3.select(event.currentTarget).datum().data;
+        tooltip.transition().duration(200).style("opacity", 0.9);
+        tooltip
+          .html(d[1] - d[0])
+          .style("left", `${event.pageX}px`)
+          .style("top", `${event.pageY}px`);
+      })
+      .on("mouseout", hideTooltip)
+      .attr("x", (d) => xScale(d.data.year))
+      .attr("y", (d) => yScale(d[1]))
+      .attr("width", xScale.bandwidth())
+      .transition()
+      .duration(100)
+      .attr("height", (d) => Math.abs(yScale(d[0]) - yScale(d[1])));
+
+    // Add tooltips to the bars
+    function showTooltip(event, text) {
+      tooltip
+        .style("opacity", 1)
+        .style("left", event.pageX + 10 + "px")
+        .style("top", event.pageY - 10 + "px")
+        .html(text);
+    }
+
+    // Function to hide the tooltip
+    function hideTooltip() {
+      tooltip.style("opacity", 0);
+    }
+
+    // Function to get the category label based on the key
+    function getCategoryLabel(key) {
+      switch (key) {
+        case "producedCapital":
+          return "Produced Capital";
+        case "renewableNaturalCapital":
+          return "Renewable Natural Capital";
+        case "nonRenewableNaturalCapital":
+          return "Non-Renewable Natural Capital";
+        case "humanCapital":
+          return "Human Capital";
+        case "netForeignAssets":
+          return "Net Foreign Assets";
+        default:
+          return "";
+      }
+    }
+  }
+  // Initialize the chart
+  updateChart();
+};
 const DrawGraph = (data) => {
   const countryData = data.filter(
     (d) => d["Country Code"].trim().toLowerCase() == country
@@ -271,18 +478,6 @@ const DrawGraph = (data) => {
     .attr("dy", "1em")
     .style("text-anchor", "middle")
     .text("Inflation Rate");
-
-  const tooltip = d3
-    .select("body")
-    .append("div")
-    .style("position", "absolute")
-    .style("pointer-events", "none")
-    .style("background-color", "rgba(0, 0, 0, 0.8)")
-    .style("color", "#fff")
-    .style("padding", "8px")
-    .style("font-size", "12px")
-    .style("border-radius", "4px")
-    .style("opacity", 0);
 
   const line = d3
     .line()
