@@ -68,7 +68,7 @@ function update() {
     } else {
       context.strokeStyle =
         country.clickedLocation && d3.geoContains(d, country.clickedLocation)
-          ? "red"
+          ? "black"
           : "#888";
         if (country.clickedLocation && d3.geoContains(d, country.clickedLocation)) {
 			country.code = d.properties["adm0_a3"];
