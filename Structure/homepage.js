@@ -53,7 +53,7 @@ function update() {
 		//console.log(e["Country Code"].trim().toLowerCase());
 		//console.log(scaleC(e["2022"]));
 		//console.log(d.properties["sov_a3"]);
-		if (d.properties["sov_a3"] == e["Country Code"]) {
+		if (d.properties["adm0_a3"] == e["Country Code"]) {
 			console.log("a");
 			if (e[sliderValue] != null) {
 				//context.fillStyle(scaleC(e["2022"])); 
@@ -71,7 +71,7 @@ function update() {
           ? "red"
           : "#888";
         if (country.clickedLocation && d3.geoContains(d, country.clickedLocation)) {
-			country.code = d.properties["sov_a3"];
+			country.code = d.properties["adm0_a3"];
 			country.data = d;
 		}
     }
@@ -116,8 +116,8 @@ function initialize() {
   d3.select("svg.detail").append("g").attr("class", "name").attr("transform", "translate(20,20)");
   d3.select("g.name").append("text").attr("class", "name");
   
-  var box = ["#0571b0","#92c5de","#f4a582","#ca0020"];
-  var text = ["<-20",-10,0,10, ">20"];
+  var box = ["#0571b0","#92c5de","#ffffbf","#f4a582","#ca0020"];
+  var text = ["<-20",-12,-4,4,12, ">20"];
   d3.select("svg.detail").append("g").attr("class", "legend").attr("transform", "translate(20,40)");
   d3.select("g.legend").selectAll("rect").data(box).join("rect")
   .attr("x", function(d, i) {
@@ -152,6 +152,6 @@ function initialize() {
   
   scaleC = d3.scaleQuantize().domain([-20, 20])
 	//.range(["#ca0020","#f4a582","#92c5de","#0571b0"]);
-	.range(["#0571b0","#92c5de","#f4a582","#ca0020"]);
+	.range(["#0571b0","#92c5de","#ffffbf","#f4a582","#ca0020"]);
 	//console.log(scaleC(-10));
 }
