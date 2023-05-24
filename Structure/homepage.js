@@ -95,7 +95,7 @@ function update() {
   });
   
   if (country.data != null)
-  	d3.select("text.name").text(country.data.properties["sovereignt"]);
+  	d3.select("text.name").text(country.data.properties["admin"]);
 }
 
 function handleClick(e) {
