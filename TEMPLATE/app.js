@@ -447,14 +447,13 @@ const DrawGraph = (data) => {
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   const x = d3.scaleLinear().domain(yearRange).range([0, width]);
-
   const y = d3
     .scaleLinear()
     .domain([
-      d3.min(inflationRates, (d) => d[1]) < 0
-        ? d3.min(inflationRates, (d) => d[1])
+      d3.min(inflationRates, (d) => +d[1]) < 0
+        ? d3.min(inflationRates, (d) => +d[1])
         : 0,
-      d3.max(inflationRates, (d) => d[1]),
+      d3.max(inflationRates, (d) => +d[1]),
     ])
     .range([height, 0]);
 
