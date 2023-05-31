@@ -63,6 +63,7 @@ function update() {
 		}
 	})
     
+    context.lineWidth = "1";
     if (country.clickedLocation == null) {
       context.strokeStyle = "#888";
     } else {
@@ -110,7 +111,7 @@ function initialize() {
   d3.select("#map canvas").on("mousemove", handleClick);
   d3.select("#map canvas").on("click", function(e) {
 	  if (country.code != null) {
-		  window.location.href = "template.html?country=" + country.code;
+		  window.location.href = "Country.html?country=" + country.code;
 	  }
   })
   d3.select("svg.detail").append("g").attr("class", "name").attr("transform", "translate(20,20)");
