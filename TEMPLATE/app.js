@@ -49,19 +49,27 @@ const PopulateFields = (d) => {
     const countryData = data.filter(
       (d) => d["wb_code"].trim().toLowerCase() == country
     );
-    // d3.csv("http://127.0.0.1:8080/Tools/WS_XRU_D_csv_col.csv").then(
-    //   (currencyData) => {
-    //     const filteredData = currencyData.filter(
-    //       (e) =>
-    //         e["Reference area"].trim().toLowerCase() ===
-    //         d["Country"].trim().toLowerCase()
-    //     );
-    //     console.log(filteredData);
-    //     d3.select("#currency").html(filteredData["Currency"]);
-    //     d3.select("#currency-value").html(filteredData["2022 - 12 - 31"] + "$");
-    //   }
-    // );
+    d3.csv(
+      "http://127.0.0.1:8080/Tools/country-code-to-currency-code-mapping.csv"
+    ).then((currencyData) => {
+      const filteredCurrencyData = currencyData.filter(
+        (c) => c["Country"].toLowerCase() === d["Country"].toLowerCase()
+      )[0];
+      const currency = [
+        filteredCurrencyData["Code"],
+        filteredCurrencyData["Currency"],
+      ];
+      d3.csv("http://127.0.0.1:8080/Tools/ExhangeRates.csv").then((rates) => {
+        const countryRates = rates.filter(
+          (c) => c["Country Name"].toLowerCase() === d["Country"].toLowerCase()
+        )[0];
+        d3.select("#currency-value").html(
+          `${countryRates["2022"]} ${currency[0]} (${currency[1]})`
+        );
+      });
+    });
     const latestData = countryData[countryData.length - 1];
+    console.log(latestData);
     d3.select("#region-name").html(latestData["wb_region"]);
     d3.select("#population").html(latestData["pop"]);
     d3.select("#total-wealth").html(
@@ -423,6 +431,8 @@ const DrawGraph = (data) => {
       inflationRates.push([d, countryData[d]]);
     }
   });
+
+  d3.select("#latest-rate").html(inflationRates[inflationRates.length - 1][1]);
 
   const margin = { top: 20, right: 20, bottom: 50, left: 50 };
   const width = 600 - margin.left - margin.right;
